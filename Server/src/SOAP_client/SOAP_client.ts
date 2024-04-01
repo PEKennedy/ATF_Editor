@@ -3,6 +3,10 @@ import { createEnvelopeMessage, extractLogs, getResponseCode, MultipartMessage, 
 import { ServerResult } from './server_result.js';
 //import { log } from '../logger';
 
+// modifications from original Nisaba:
+// - replaced logger with console logs
+// - added url parameter to constructor
+
 /*
 1. Gather all the information for the message from the text (start with hardcoded)
 3. Create the message
@@ -21,7 +25,8 @@ export class SOAPClient {
     atf_project: string;
     responseID: string;
 
-    constructor(atf_name: string, atf_project: string, atf_text: string) {
+    constructor(atf_name: string, atf_project: string, atf_text: string, url:string="http://build-oracc.museum.upenn.edu") {
+        this.url = url;
         this.atf_text = atf_text;
         this.atf_filename = atf_name;
         this.atf_project = atf_project;

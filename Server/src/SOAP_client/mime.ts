@@ -1,10 +1,7 @@
-//import mimemessage from 'mimemessage';
-//let mimemessage = require('mimemessage');
 import mimemessage from 'mimemessage';
-
 import { parseString } from 'xml2js';
-//import * as AdmZip from 'adm-zip';
 import AdmZip from 'adm-zip';
+
 /**
  * A wrapper around mimemessage.Entity, for better access and control of encoding.
  *
@@ -46,6 +43,7 @@ export class MultipartMessage {
         zip.addFile(`00atf/${filename}`, Buffer.alloc(Buffer.byteLength(text), text));
         // Use the ISO-8859-1 encoding, to ensure we don't misinterpret the zip contents.
         this.attachment = zip.toBuffer();
+        //console.log("attachment is",this.attachment)
         message.body.push(createAttachment(this.attachment.toString('latin1')));
         this._message = message;
         this.boundary = message.contentType().params.boundary;

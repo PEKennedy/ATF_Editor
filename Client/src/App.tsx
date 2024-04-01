@@ -14,6 +14,8 @@ import {syntaxTree} from "@codemirror/language"
 
 import * as project_options from './settings/projects.json';
 
+import JSZip from 'jszip';
+
 //let project_options = require("./settings/projects.json")
 //console.log(project_options)
 
@@ -24,13 +26,24 @@ function App() {
 
   const [text, setText] = useState("console.log('hello world!');");
   const [project, setProject] = useState("tests/mini");
-  const [filename, setFilename] = useState("hyphens.atf");
-  const [server, setServer] = useState("UPENN") //build-oracc.museum.upenn.edu or oracc.ub.uni-muenchen.de
+  const [filename, setFilename] = useState("hyphens");
+  const [server, setServer] = useState("UPenn") //build-oracc.museum.upenn.edu or oracc.ub.uni-muenchen.de
   const [errors, setErrors] = useState("");
   let errLinesInitVar:number[] = []
   const [errorlines, setErrorLines] = useState(errLinesInitVar);
 
   async function PostToORACC(textbody="test", project="tests/mini", file="hyphens.atf", server="UPENN", method="validate"){
+
+    /*
+    //An experiment in creating zips here to minimize traffic sent to our server
+    //Main constraint is making sure these files are fine for ORACC too
+    let zip = new JSZip();
+    zip.file(`00atf/${file}`,textbody)
+    //try base64 too
+    zip.generateAsync({type:'blob'}).then((content)=>{
+      console.log(content);
+    })*/
+
     const response = await fetch(`http://${url}:${port}/${method}`, {
       method:"POST",
       mode:"cors",
@@ -58,26 +71,26 @@ function App() {
     //console.log(val)
     //setErrors(""); //erases errors until new validation is run, we do this to stop things from highlighting
     //the incorrect lines
-    
     setText(val);
   }, []);
 
   const ProjectChanged = React.useCallback((val) => {//, viewUpdate
-    //console.log(val.target.value)
     setProject(val.target.value);
   }, []);
 
   const FileNameChanged = useCallback((val) => { //, viewUpdate
-    //console.log(val)
     setFilename(val.target.value);
   }, []);
 
+  const ServerChanged = useCallback((val)=>{
+    setServer(val.target.value)
+  },[])
 
   const FileUploaded = (e) => {
     if(e.target.files.length > 0){
         var file = e.target.files[0]
         //console.log(file);
-        setFilename(file.name)
+        setFilename(file.name.split(".")[0])
 
         file.text().then((res)=>{ //read the file blob as text
           setText(res) //set the file editor text state
@@ -117,12 +130,13 @@ function App() {
     }    
   }
 
+  //TODO: See if npm FileSaver would be better for this
   const FileDownload = (e) =>{
     var blob = new Blob([text],{type:"text/plain"})
     var url = URL.createObjectURL(blob)
     var link = document.createElement("a");
     link.href = url
-    link.download = filename
+    link.download = filename + ".atf"
     document.body.appendChild(link)
     link.click()    
   }
@@ -138,16 +152,31 @@ function App() {
   }
 
   function validate(e){
-
     PostToORACC(text,project,filename,server,"validate").then((data)=>{
       console.log(data)
-
-
       setErrors(data);//diagnostics);
-
     }).catch((e)=>{
       console.error(e)
     })
+  }
+
+  function lemmatise(e){
+    PostToORACC(text,project,filename,server,"lemmatise").then((data)=>{
+      let parsed = JSON.parse(data);
+      //console.log(parsed.log)
+      //console.log(parsed.lem)
+      setErrors(parsed.log);
+      setText(parsed.lem);
+    }).catch((e)=>{
+      console.error(e)
+    })
+  }
+
+  function newDoc(e){
+    //present this dialog only if the page is 'dirty' (that is, no save since last change)
+    console.log("Are you sure? (changes to current document will not be saved)")
+    //yes = clear the document
+    //no = don't do anything
   }
 
   //called by codemirror to get diagnostics (err/warning messages) on document change
@@ -217,21 +246,16 @@ function App() {
 
         //if(!lenChanged) return;
         errorlines.forEach((val,ind)=>{
-          let cursor1 = viewUpdate.state.doc.iterLines(val-lenChanged,val-1) //just before the line
-          let cursor2 = viewUpdate.state.doc.iterLines(val+1,val+lenChanged) //just after the line
+          //errors "no property length"
+          //let cursor1 = viewUpdate.state.doc.iterLines(val-lenChanged,val-1) //just before the line
+          //let cursor2 = viewUpdate.state.doc.iterLines(val+1,val+lenChanged) //just after the line
           //cursor1.
         })
       }   
     }
   }
 
-  function lemmatise(e){
-    /*PostToORACC(text,project,filename,server,"lemmatise").then((data)=>{
-      console.log(data)
-    }).catch((e)=>{
-      console.error(e)
-    })*/
-  }
+
 
 
   /*TODO:
@@ -249,28 +273,66 @@ function App() {
       -Need to get a server running all this code for demo purposes
       -Github
       -Text colouring
+      - * next to doenload to indicate unsaved changes
+      - New file dialog
+      - Maybe a new file by template (not in scope atm)
+
+      - SERVER:
+      - Use Zip to shrink the file in the browser to save data (and account for this in the backend)
 
       Changes use view.viewUpdate.docChanged
+
+              <button onClick={()=>{
+          console.log(server + " " + filename + " ")
+        }}>Log</button>
 
   */
   return (
     <>
 
       <div>
-        ATF Upload - <input type="file" onChange={FileUploaded}/><br/>
-        File Name: <input type="text" onChange={FileNameChanged} value={filename}/><br/>
-        <button onClick={FileDownload}>Download</button><br/><br/>
+        <button onClick={newDoc}>New</button>
 
-        <label htmlFor="project_select">Project </label>
+        <label htmlFor="file-in" className='file-upload'>Load</label>
+        <input type="file" onChange={FileUploaded} accept=".atf" id="file-in" className='display:none;'/>
+        <button onClick={FileDownload}>Download</button>
+        <label htmlFor="file-name"> File Name </label>
+        <input type="text" onChange={FileNameChanged} value={filename} id="file-name"/>
+        <br/>
+
+        <label htmlFor="server_select">ORACC Server </label>
+        <select id="server_select" onChange={ServerChanged} value={server}>
+          <option key="US">UPenn</option>
+          {/*
+          TODO: Muenchen isn't working at the moment
+          <option key="DE">Muenchen</option>
+          */}
+        </select>
+
+        <label htmlFor="project_select"> Project </label>
         <input type="text" list="projects" id="project_select" onChange={ProjectChanged} value={project}/>
         <datalist id="projects">
           {project_options.projects.map((item,ind)=><option key={ind}>{item}</option>)}
         </datalist>
-        <button onClick={setProjectInText}>Set Project</button><br/>
+        <button onClick={setProjectInText}>Set Project</button>
 
         <button onClick={validate}>Validate</button>
         <button onClick={lemmatise}>Lemmatise</button><br/>
 
+        <button>To CDLI (ASCII)</button>
+        <button>To ORACC (Unicode)</button>
+        <br/>
+
+        
+        <div>Character modifier (@c, @f, @g, etc buttons w/ pics)</div>
+        <div>Area for non-ascii characters (×,₂,š, etc.)</div>
+        <div>Area for enabling protocols and advanced conventions 
+        <select id="server_select" value="babylonian">
+          <option key="1">Babylonian</option>
+          <option key="2">Sumerian</option>
+        </select>
+        <button>Set Language</button>
+        </div><br/>
         <CodeMirror value={text} height="500px" onChange={TextChanged} extensions={[
             keymap.of([{
               key: "Control-d",
