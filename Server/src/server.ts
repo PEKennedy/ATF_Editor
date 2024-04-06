@@ -5,7 +5,7 @@ import cors from "cors";
 import { validate, lemmatise } from "./SOAP_client/messages.js";
 
 const app = express();
-const port = 3000;
+const test_port = 3000;
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -60,6 +60,7 @@ app.post("/lemmatise", async (req,res)=>{
   }
 })
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}!`);
+const PORT = process.env.PORT || test_port
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });

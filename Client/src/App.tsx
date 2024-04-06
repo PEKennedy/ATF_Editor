@@ -5,24 +5,28 @@ import { useState } from 'react'
 //import viteLogo from '/vite.svg'
 import './App.css'
 import CodeMirror from '@uiw/react-codemirror';
-import {keymap, ViewUpdate} from "@codemirror/view"
+import {ViewUpdate} from "@codemirror/view" //keymap, 
 import {basicSetup, EditorView} from "codemirror"
-import { defaultKeymap } from "@codemirror/commands";
+//import { defaultKeymap } from "@codemirror/commands";
 import { oneDarkTheme } from '@uiw/react-codemirror'
 import {Diagnostic, linter, lintGutter} from "@codemirror/lint";
-import {syntaxTree} from "@codemirror/language"
+//import {syntaxTree} from "@codemirror/language"
 
 import * as project_options from './settings/projects.json';
 
-import JSZip from 'jszip';
+//import JSZip from 'jszip';
 
 //let project_options = require("./settings/projects.json")
 //console.log(project_options)
 
 function App() {
-
-  const url = "localhost"
-  const port = 3000
+  //Testing >> TODO: Maybe make switching this something to do with env/automatic
+  //const url = "localhost"
+  //const port = ":3000"
+  //Production (Cloud Hosting)
+  // note: the backend must be requested with https
+  const url = "backend-dot-atf-editor.uk.r.appspot.com/"
+  const port = ""
 
   const [text, setText] = useState("console.log('hello world!');");
   const [project, setProject] = useState("tests/mini");
@@ -44,14 +48,17 @@ function App() {
       console.log(content);
     })*/
 
-    const response = await fetch(`http://${url}:${port}/${method}`, {
+    //:${port}
+    //console.log(project, file, textbody, server)
+
+    const response = await fetch(`https://${url}${port}/${method}`, {
       method:"POST",
       mode:"cors",
       cache:"no-cache",
       credentials:"same-origin",
       body: JSON.stringify({
         "project":project,
-        "filename":file,
+        "filename":file+".atf",
         "text":textbody,
         "server":server
       }),
@@ -66,33 +73,32 @@ function App() {
     return data;
   }
 
-  const TextChanged = React.useCallback((val, viewUpdate) => {
-    //viewUpdate.
+  const TextChanged = React.useCallback((val:string, viewUpdate:any) => {
     //console.log(val)
     //setErrors(""); //erases errors until new validation is run, we do this to stop things from highlighting
     //the incorrect lines
     setText(val);
   }, []);
 
-  const ProjectChanged = React.useCallback((val) => {//, viewUpdate
+  const ProjectChanged = React.useCallback((val:any) => {//, viewUpdate
     setProject(val.target.value);
   }, []);
 
-  const FileNameChanged = useCallback((val) => { //, viewUpdate
+  const FileNameChanged = useCallback((val:any) => { //, viewUpdate
     setFilename(val.target.value);
   }, []);
 
-  const ServerChanged = useCallback((val)=>{
+  const ServerChanged = useCallback((val:any)=>{
     setServer(val.target.value)
   },[])
 
-  const FileUploaded = (e) => {
+  const FileUploaded = (e:any) => {
     if(e.target.files.length > 0){
         var file = e.target.files[0]
         //console.log(file);
         setFilename(file.name.split(".")[0])
 
-        file.text().then((res)=>{ //read the file blob as text
+        file.text().then((res:any)=>{ //read the file blob as text
           setText(res) //set the file editor text state
 
           // Use regex to extract any project code from the file
@@ -100,7 +106,7 @@ function App() {
           const match = text.match(proj_re);
           //console.log(match[1])
           if(match && match[1]) setProject(match[1])
-        }).catch((err)=>{
+        }).catch((err:any)=>{
           console.error(err);
         })
         //console.log(e)
@@ -108,7 +114,7 @@ function App() {
     }
   }
 
-  function setProjectInText(e){
+  function setProjectInText(e:any){
     const proj_re = /#project: ([\w/]+)/i
     const match = text.match(proj_re);
     var proj_string = "#project: "+ project
@@ -131,7 +137,7 @@ function App() {
   }
 
   //TODO: See if npm FileSaver would be better for this
-  const FileDownload = (e) =>{
+  const FileDownload = (e:any) =>{
     var blob = new Blob([text],{type:"text/plain"})
     var url = URL.createObjectURL(blob)
     var link = document.createElement("a");
@@ -141,7 +147,7 @@ function App() {
     link.click()    
   }
 
-  function moveToLine(view) {
+  /*function moveToLine(view:any) {
     console.log("MOVE TO LINE")
     let line = prompt("Which line?")
     if (!/^\d+$/.test(line) || +line <= 0 || +line > view.state.doc.lines)
@@ -149,9 +155,9 @@ function App() {
     let pos = view.state.doc.line(+line).from
     view.dispatch({selection: {anchor: pos}, userEvent: "select"})
     return true
-  }
+  }*/
 
-  function validate(e){
+  function validate(e:any){
     PostToORACC(text,project,filename,server,"validate").then((data)=>{
       console.log(data)
       setErrors(data);//diagnostics);
@@ -160,7 +166,7 @@ function App() {
     })
   }
 
-  function lemmatise(e){
+  function lemmatise(e:any){
     PostToORACC(text,project,filename,server,"lemmatise").then((data)=>{
       let parsed = JSON.parse(data);
       //console.log(parsed.log)
@@ -172,7 +178,7 @@ function App() {
     })
   }
 
-  function newDoc(e){
+  function newDoc(e:any){
     //present this dialog only if the page is 'dirty' (that is, no save since last change)
     console.log("Are you sure? (changes to current document will not be saved)")
     //yes = clear the document
@@ -207,14 +213,14 @@ function App() {
     
     setErrorLines([])
 
-    error_matches?.forEach((err)=>{
+    Array.from(error_matches).forEach((err:any)=>{
       let lineNum = err[1]
       let message = err[2]
       //console.log(lineNum)
       //console.log(message)
       let line = view.state.doc.line(lineNum)
       //console.log(syntaxTree(view.state).resolve(line.from))
-      let errs:number[] = [...errorlines, line]
+      let errs:number[] = [...errorlines, line.number]
       setErrorLines(errs)
 
       diagnostics.push({
@@ -258,33 +264,29 @@ function App() {
 
 
 
-  /*TODO:
-      -server selection (not that it matters since it connects to my backend)
-      -lemmatise
-      -ORACC console
-      -buttons for common ATF syntax things (make this highlighted word a compound, etc)
-      -Buttons to convert between ORACC atf and CDLI atf?
-      -Language selection (make a reusable component similar to project selector?)
-      -Right to left option (arabic support is wanted)
-      -Make updates to the text through CodeMirror transactions so that undo+redo are supported
-
-      -syntax highlighting, both from my own atf model, and ORACC errors
-      -Tooltips for the syntax characters to explain what they do
-      -Need to get a server running all this code for demo purposes
-      -Github
-      -Text colouring
-      - * next to doenload to indicate unsaved changes
-      - New file dialog
-      - Maybe a new file by template (not in scope atm)
-
-      - SERVER:
-      - Use Zip to shrink the file in the browser to save data (and account for this in the backend)
-
+  /*
       Changes use view.viewUpdate.docChanged
 
-              <button onClick={()=>{
+        <button onClick={()=>{
           console.log(server + " " + filename + " ")
         }}>Log</button>
+
+
+        <button>To CDLI (ASCII)</button>
+        <button>To ORACC (Unicode)</button>
+        <br/>
+
+        
+        <div>Character modifier (@c, @f, @g, etc buttons w/ pics)</div>
+        <div>Area for non-ascii characters (×,₂,š, etc.)</div>
+        <div>Area for enabling protocols and advanced conventions 
+        <select id="server_select" value="babylonian">
+          <option key="1">Babylonian</option>
+          <option key="2">Sumerian</option>
+        </select>
+        <button>Set Language</button>
+        </div><br/>
+
 
   */
   return (
@@ -319,25 +321,11 @@ function App() {
         <button onClick={validate}>Validate</button>
         <button onClick={lemmatise}>Lemmatise</button><br/>
 
-        <button>To CDLI (ASCII)</button>
-        <button>To ORACC (Unicode)</button>
-        <br/>
-
-        
-        <div>Character modifier (@c, @f, @g, etc buttons w/ pics)</div>
-        <div>Area for non-ascii characters (×,₂,š, etc.)</div>
-        <div>Area for enabling protocols and advanced conventions 
-        <select id="server_select" value="babylonian">
-          <option key="1">Babylonian</option>
-          <option key="2">Sumerian</option>
-        </select>
-        <button>Set Language</button>
-        </div><br/>
         <CodeMirror value={text} height="500px" onChange={TextChanged} extensions={[
-            keymap.of([{
+            /*keymap.of([{
               key: "Control-d",
               run: (v) => {moveToLine(v)}
-            }, ...defaultKeymap]),
+            }, ...defaultKeymap]),*/
             basicSetup,
             linter(getDiagnostics),
             lintGutter(),
@@ -346,33 +334,11 @@ function App() {
           theme={oneDarkTheme} //TODO: Check browser preferences to choose an appropriate theme
         />
       </div>
+      <div>
+        <a href='https://github.com/PEKennedy/ATF_Editor' target="_blank">Github</a>
+      </div>
     </>
   )
 }
-
-/*
-
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-
-*/
 
 export default App

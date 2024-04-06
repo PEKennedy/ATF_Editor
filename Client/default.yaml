@@ -1,0 +1,36 @@
+runtime: nodejs18
+
+instance_class: F1
+
+# match requests to /.* to dist
+handlers:
+
+# JS files need to be handled separately because google gives them
+# the incorrect mime_type (text/html), which in turn means they are blocked by
+# the browser
+#- url: /assets/(.*).js #what url path is being accessed
+#  static_files: dist/assets/\1.js # unsure, where to find the assets
+#  upload: dist/assets/(.*).js # unsure, where to find the assets
+#  mime_type: application/javascript
+
+# For some reason the mime_type fix is only working if you manually set the
+# name of the js file like so...
+
+- url: /assets/index-htEN0pMb.js
+  static_files: dist/assets/index-htEN0pMb.js
+  upload: dist/assets/index-htEN0pMb.js
+  mime_type: application/javascript
+
+- url: /assets/(.*).css
+  static_files: dist/assets/\1.css
+  upload: dist/assets/(.*).css
+
+- url: /cuneiform_b.svg
+  static_files: dist/cuneiform_b.svg
+  upload: dist/cuneiform_b.svg
+
+- url: /.*
+  static_files: dist/index.html
+  upload: dist/index.html
+
+

@@ -1,0 +1,6 @@
+dispatch:
+  - url: "atf-editor.uk.r.appspot.com/*"
+    service: default
+
+  - url: "backend.atf-editor.uk.r.appspot.com/*"
+    service: backend

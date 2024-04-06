@@ -8,9 +8,13 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+dist/*
 dist-ssr
 *.local
+
+# reinclude google cloud hosting things
+!dist/app.yaml
+!dist/.gcloudignore
 
 # Editor directories and files
 .vscode/*

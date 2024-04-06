@@ -1,0 +1,16 @@
+runtime: nodejs18
+
+instance_class: F1
+
+service: backend
+
+# match requests to /.* to dist
+handlers:
+- url: /(.*\..+)$
+  static_files: dist/\1
+  upload: dist/(.*\..+)$
+#- url: /.*
+  secure: always
+#  static_files: dist/\1
+#  upload: dist/
+#  script: auto
