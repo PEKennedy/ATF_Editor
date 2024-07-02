@@ -17,7 +17,6 @@ Currently Hosted on Google Cloud
 
 ### TODO:
     -server selection (not that it matters since it connects to my backend)
-    -lemmatise
     -ORACC console
     -buttons for common ATF syntax things (make this highlighted word a compound, etc)
     -Buttons to convert between ORACC atf and CDLI atf?
@@ -27,10 +26,8 @@ Currently Hosted on Google Cloud
 
     -syntax highlighting, both from my own atf model, and ORACC errors
     -Tooltips for the syntax characters to explain what they do
-    -Need to get a server running all this code for demo purposes
-    -Github
     -Text colouring
-    - * next to doenload to indicate unsaved changes
+    - * next to download to indicate unsaved changes
     - New file dialog
     - Maybe a new file by template (not in scope atm)
 

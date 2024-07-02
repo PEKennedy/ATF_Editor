@@ -14,6 +14,8 @@ import {Diagnostic, linter, lintGutter} from "@codemirror/lint";
 
 import * as project_options from './settings/projects.json';
 
+import {useRef} from 'react';
+
 //import JSZip from 'jszip';
 
 //let project_options = require("./settings/projects.json")
@@ -35,6 +37,9 @@ function App() {
   const [errors, setErrors] = useState("");
   let errLinesInitVar:number[] = []
   const [errorlines, setErrorLines] = useState(errLinesInitVar);
+
+//NOTE: useRef persists between renders
+
 
   async function PostToORACC(textbody="test", project="tests/mini", file="hyphens.atf", server="UPENN", method="validate"){
 
@@ -261,6 +266,10 @@ function App() {
     }
   }
 
+  function addCharacter(char){
+    //let transaction = view.state.update({changes: {from: cursor, instert: char}})
+    //view.dispatch(transaction)
+  }
 
 
 
@@ -277,8 +286,8 @@ function App() {
         <br/>
 
         
-        <div>Character modifier (@c, @f, @g, etc buttons w/ pics)</div>
-        <div>Area for non-ascii characters (×,₂,š, etc.)</div>
+        
+        
         <div>Area for enabling protocols and advanced conventions 
         <select id="server_select" value="babylonian">
           <option key="1">Babylonian</option>
@@ -320,6 +329,14 @@ function App() {
 
         <button onClick={validate}>Validate</button>
         <button onClick={lemmatise}>Lemmatise</button><br/>
+        <div>
+          Character modifier (@c, @f, @g, etc buttons w/ pics)<br/>
+          
+          
+        </div>
+        <div>Area for non-ascii characters (×,₂,š, etc.)
+        <button onClick={()=>{addCharacter("š")}}>š</button>
+        </div>
 
         <CodeMirror value={text} height="500px" onChange={TextChanged} extensions={[
             /*keymap.of([{

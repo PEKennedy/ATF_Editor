@@ -16,9 +16,9 @@ handlers:
 # For some reason the mime_type fix is only working if you manually set the
 # name of the js file like so...
 
-- url: /assets/index-htEN0pMb.js
-  static_files: dist/assets/index-htEN0pMb.js
-  upload: dist/assets/index-htEN0pMb.js
+- url: /assets/index-z5YHTRLi.js
+  static_files: dist/assets/index-z5YHTRLi.js
+  upload: dist/assets/index-z5YHTRLi.js
   mime_type: application/javascript
 
 - url: /assets/(.*).css
