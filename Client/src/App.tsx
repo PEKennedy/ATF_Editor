@@ -1,20 +1,20 @@
 
-import React, { useCallback } from 'react'
+import React, { createRef, Ref, useCallback, useEffect, useRef } from 'react'
 import { useState } from 'react'
 //import reactLogo from './assets/react.svg'
 //import viteLogo from '/vite.svg'
 import './App.css'
-import CodeMirror from '@uiw/react-codemirror';
+import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import {ViewUpdate} from "@codemirror/view" //keymap, 
 import {basicSetup, EditorView} from "codemirror"
 //import { defaultKeymap } from "@codemirror/commands";
-import { oneDarkTheme } from '@uiw/react-codemirror'
+import { oneDarkTheme } from '@uiw/react-codemirror' //ReactCodeMirror, 
 import {Diagnostic, linter, lintGutter} from "@codemirror/lint";
 //import {syntaxTree} from "@codemirror/language"
 
 import * as project_options from './settings/projects.json';
 
-import {useRef} from 'react';
+//import {useRef, useEffect} from 'react';
 
 //import JSZip from 'jszip';
 
@@ -30,7 +30,7 @@ function App() {
   const url = "backend-dot-atf-editor.uk.r.appspot.com/"
   const port = ""
 
-  const [text, setText] = useState("console.log('hello world!');");
+  const [text, setText] = useState("");
   const [project, setProject] = useState("tests/mini");
   const [filename, setFilename] = useState("hyphens");
   const [server, setServer] = useState("UPenn") //build-oracc.museum.upenn.edu or oracc.ub.uni-muenchen.de
@@ -38,8 +38,11 @@ function App() {
   let errLinesInitVar:number[] = []
   const [errorlines, setErrorLines] = useState(errLinesInitVar);
 
-//NOTE: useRef persists between renders
+  //Type 'MutableRefObject<ReactCodeMirrorRef | undefined>' is not assignable to
+  // type 'Ref<ReactCodeMirrorRef> | undefined'
 
+  //problem with createRef ref being null in async functions, so use useRef instead
+  const editorRef: Ref<ReactCodeMirrorRef> = useRef(null)//createRef()
 
   async function PostToORACC(textbody="test", project="tests/mini", file="hyphens.atf", server="UPENN", method="validate"){
 
@@ -82,6 +85,7 @@ function App() {
     //console.log(val)
     //setErrors(""); //erases errors until new validation is run, we do this to stop things from highlighting
     //the incorrect lines
+    
     setText(val);
   }, []);
 
@@ -102,10 +106,13 @@ function App() {
         var file = e.target.files[0]
         //console.log(file);
         setFilename(file.name.split(".")[0])
-
+        let x = editorRef.current.view
+        console.log(x)
         file.text().then((res:any)=>{ //read the file blob as text
-          setText(res) //set the file editor text state
-
+          //setText(res) //set the file editor text state
+          //console.log(res)
+          console.log(editorRef)
+          overwriteEditor(res)
           // Use regex to extract any project code from the file
           const proj_re = /#project: ([\w/]+)/
           const match = text.match(proj_re);
@@ -117,7 +124,7 @@ function App() {
         //console.log(e)
         e.target.value = "" //clear the file picker
     }
-  }
+  };
 
   function setProjectInText(e:any){
     const proj_re = /#project: ([\w/]+)/i
@@ -126,17 +133,17 @@ function App() {
     if(match){
       //console.log(match)
       var modified_text = text.replace(proj_re, proj_string);
-      setText(modified_text)
+      overwriteEditor(modified_text)
     }
     else{ //need to generate the project tag somewhere
       const metadata_re = /[&][\w =,.:]+/ //finds &P01234 = .... and #atf: .... lines
       const match_meta = text.match(metadata_re);
       if(match_meta){ //add the project tag after one of these
         var modified_text = text.replace(metadata_re, match_meta+"\n"+proj_string)
-        setText(modified_text)
+        overwriteEditor(modified_text)
       }
       else{ //nothing, just add a new line at the start of the file
-        setText(proj_string + "\n" + text)
+        overwriteEditor(proj_string + "\n" + text)
       }
     }    
   }
@@ -177,7 +184,8 @@ function App() {
       //console.log(parsed.log)
       //console.log(parsed.lem)
       setErrors(parsed.log);
-      setText(parsed.lem);
+      //setText(parsed.lem);
+      overwriteEditor(parsed.lem)
     }).catch((e)=>{
       console.error(e)
     })
@@ -188,6 +196,7 @@ function App() {
     console.log("Are you sure? (changes to current document will not be saved)")
     //yes = clear the document
     //no = don't do anything
+    overwriteEditor("")
   }
 
   //called by codemirror to get diagnostics (err/warning messages) on document change
@@ -242,6 +251,8 @@ function App() {
 
   //if the user deletes the error line, the error should go away
   //if the user adds/deletes a line before the error line, the error line number should change accordingly
+  //without having to call ORACC's validate again
+  //tricky, as so far I don't know how to see a before/after user input change directly
   function updateDiagnostics(viewUpdate:ViewUpdate){
     if(viewUpdate.docChanged && !viewUpdate.focusChanged){
       let lenChanged = viewUpdate.state.doc.lines - viewUpdate.startState.doc.lines
@@ -267,10 +278,25 @@ function App() {
   }
 
   function addCharacter(char){
-    //let transaction = view.state.update({changes: {from: cursor, instert: char}})
-    //view.dispatch(transaction)
+    let view = editorRef.current.view;
+    let state = editorRef.current.view.state;
+
+    let cursor = state.selection.main.from
+    let transaction = state.update({changes: {from: cursor, insert: char}})
+
+    view.dispatch(transaction)
   }
 
+  //overwrite the editor in a transaction so that undo history is preserved
+  //function overwriteEditor(text){
+  const overwriteEditor = useCallback((newText)=>{
+
+    let view = editorRef?.current?.view;
+    let state = view?.state;
+
+    let transaction = state?.update({changes: {from: 0, to: state.doc.length, insert: newText}})
+    view?.dispatch(transaction)
+  },[])
 
 
   /*
@@ -284,9 +310,6 @@ function App() {
         <button>To CDLI (ASCII)</button>
         <button>To ORACC (Unicode)</button>
         <br/>
-
-        
-        
         
         <div>Area for enabling protocols and advanced conventions 
         <select id="server_select" value="babylonian">
@@ -296,16 +319,22 @@ function App() {
         <button>Set Language</button>
         </div><br/>
 
-
+          TODO: Muenchen isn't working at the moment
+          <option key="DE">Muenchen</option>
   */
+//https://oracc.museum.upenn.edu//doc/help/editinginatf/primer/inlinetutorial/index.html
+
+  let awkwardChars = ['š','Š','ṣ','Ṣ','ṭ','Ṭ','ś','Ś','ʾ','ḫ','Ḫ','ŋ','Ŋ','×',
+    '₀','₁','₂','₃','₄','₅','₆','₇','₈','₉','ₓ']
+
   return (
     <>
-
       <div>
         <button onClick={newDoc}>New</button>
 
         <label htmlFor="file-in" className='file-upload'>Load</label>
-        <input type="file" onChange={FileUploaded} accept=".atf" id="file-in" className='display:none;'/>
+        <input type="file" onChange={(e)=>{console.log(editorRef);
+        FileUploaded(e)}} accept=".atf" id="file-in" className='display:none;'/>
         <button onClick={FileDownload}>Download</button>
         <label htmlFor="file-name"> File Name </label>
         <input type="text" onChange={FileNameChanged} value={filename} id="file-name"/>
@@ -314,10 +343,7 @@ function App() {
         <label htmlFor="server_select">ORACC Server </label>
         <select id="server_select" onChange={ServerChanged} value={server}>
           <option key="US">UPenn</option>
-          {/*
-          TODO: Muenchen isn't working at the moment
-          <option key="DE">Muenchen</option>
-          */}
+
         </select>
 
         <label htmlFor="project_select"> Project </label>
@@ -330,19 +356,14 @@ function App() {
         <button onClick={validate}>Validate</button>
         <button onClick={lemmatise}>Lemmatise</button><br/>
         <div>
-          Character modifier (@c, @f, @g, etc buttons w/ pics)<br/>
-          
-          
+          Character modifier (@c, @f, @g, etc buttons w/ pics)<br/>          
         </div>
-        <div>Area for non-ascii characters (×,₂,š, etc.)
-        <button onClick={()=>{addCharacter("š")}}>š</button>
+        <div> Non-Ascii Characters:
+        {awkwardChars.map((item,ind)=><button key={ind} onClick={()=>{addCharacter(item)}}>{item}</button>)}
         </div>
+        
+        <CodeMirror value={text} height="500px" onChange={TextChanged} ref={editorRef} extensions={[
 
-        <CodeMirror value={text} height="500px" onChange={TextChanged} extensions={[
-            /*keymap.of([{
-              key: "Control-d",
-              run: (v) => {moveToLine(v)}
-            }, ...defaultKeymap]),*/
             basicSetup,
             linter(getDiagnostics),
             lintGutter(),
@@ -354,8 +375,14 @@ function App() {
       <div>
         <a href='https://github.com/PEKennedy/ATF_Editor' target="_blank">Github</a>
       </div>
+      
     </>
   )
 }
+
+            /*keymap.of([{
+              key: "Control-d",
+              run: (v) => {moveToLine(v)}
+            }, ...defaultKeymap]),*/
 
 export default App
