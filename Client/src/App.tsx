@@ -87,6 +87,7 @@ function App() {
     //the incorrect lines
     
     setText(val);
+    sessionStorage.setItem("unsaved","T");
   }, []);
 
   const ProjectChanged = React.useCallback((val:any) => {//, viewUpdate
@@ -106,12 +107,10 @@ function App() {
         var file = e.target.files[0]
         //console.log(file);
         setFilename(file.name.split(".")[0])
-        let x = editorRef.current.view
-        console.log(x)
         file.text().then((res:any)=>{ //read the file blob as text
           //setText(res) //set the file editor text state
           //console.log(res)
-          console.log(editorRef)
+          //console.log(editorRef)
           overwriteEditor(res)
           // Use regex to extract any project code from the file
           const proj_re = /#project: ([\w/]+)/
@@ -156,7 +155,8 @@ function App() {
     link.href = url
     link.download = filename + ".atf"
     document.body.appendChild(link)
-    link.click()    
+    link.click()
+    sessionStorage.setItem("unsaved","F");
   }
 
   /*function moveToLine(view:any) {
@@ -298,6 +298,33 @@ function App() {
     view?.dispatch(transaction)
   },[])
 
+  const saveToLocal = () =>{
+    localStorage.setItem("text",text);
+    localStorage.setItem("fileName",filename);
+    localStorage.setItem("Project",project);
+    console.log("Saved to local storage!");
+    sessionStorage.setItem("unsaved","F");
+  }
+
+  const loadFromLocal = () => {
+    let t = localStorage.getItem("text");
+    let f = localStorage.getItem("fileName");
+    let p = localStorage.getItem("Project");
+    if(t != null) overwriteEditor(t);
+    if(f != null) setFilename(f);
+    if(p != null) setProject(p);
+    console.log("Loaded from local storage!")
+    sessionStorage.setItem("unsaved","F");
+  }
+
+  window.onbeforeunload = (event) => {
+    //null or F should trigger the "are you sure you want to leave" dialog
+    let unsaved = sessionStorage.getItem("unsaved") == "T"; 
+    if(unsaved){
+      event?.preventDefault()
+      event.returnValue = true;
+    }
+  }
 
   /*
       Changes use view.viewUpdate.docChanged
@@ -332,10 +359,12 @@ function App() {
       <div>
         <button onClick={newDoc}>New</button>
 
-        <label htmlFor="file-in" className='file-upload'>Load</label>
-        <input type="file" onChange={(e)=>{console.log(editorRef);
-        FileUploaded(e)}} accept=".atf" id="file-in" className='display:none;'/>
+        <label htmlFor="file-in" className='file-upload'>Upload</label>
+        <input type="file" onChange={FileUploaded} accept=".atf" id="file-in" className='display:none;'/>
         <button onClick={FileDownload}>Download</button>
+        <button onClick={saveToLocal}>Save To Local Storage</button>
+        <button onClick={loadFromLocal}>Load From Local Storage</button>
+        <button onClick={()=>{localStorage.clear()}}>Clear Storage</button>
         <label htmlFor="file-name"> File Name </label>
         <input type="text" onChange={FileNameChanged} value={filename} id="file-name"/>
         <br/>
