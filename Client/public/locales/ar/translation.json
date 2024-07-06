@@ -1,4 +1,17 @@
 {
-    "Language":"idkidk",
-    "newDoc":"New maybe"
+    "Language":"Language",
+    "NewDoc":"New",
+    "Upload":"Upload",
+    "Download":"Download",
+    "SaveLocal":"Save to Local Storage",
+    "LoadLocal":"حمل from Local Storage",
+    "ClearStorage":"Clear Storage",
+    "FileName":"File Name",
+    "Server":"ORACC Server",
+    "UPENN":"UPENN",
+    "Project":"Project",
+    "SetProj":"Set Project",
+    "Validate":"أيد",
+    "Lemmatise":"المأخوذ -ise",
+    "Github":"Github"
 }
