@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "@uiw/react-codemirror": "^4.21.21",
+    "i18next": "^23.11.5",
+    "i18next-browser-languagedetector": "^8.0.0",
+    "i18next-http-backend": "^2.5.2",
     "jszip": "^3.10.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-i18next": "^14.1.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",

@@ -1,0 +1,17 @@
+{
+    "Language":"Langue",
+    "NewDoc":"Nouveau",
+    "Upload":"Importer",
+    "Download":"Télécharger",
+    "SaveLocal":"Sauver à Stockage Local",
+    "LoadLocal":"Charger de Stockage Local",
+    "ClearStorage":"Vider Stockage",
+    "FileName":"Nom de fichier",
+    "Server":"Server ORACC",
+    "UPENN":"UPENN",
+    "Project":"Projet",
+    "SetProj":"Choisir Projet",
+    "Validate":"Valider",
+    "Lemmatise":"Lemmatiser",
+    "Github":"Github"
+}

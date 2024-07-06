@@ -13,6 +13,8 @@ import {Diagnostic, linter, lintGutter} from "@codemirror/lint";
 //import {syntaxTree} from "@codemirror/language"
 
 import * as project_options from './settings/projects.json';
+import {useTranslation} from 'react-i18next';
+import LangSwitcher from './LangSwitcher';
 
 //import {useRef, useEffect} from 'react';
 
@@ -22,6 +24,9 @@ import * as project_options from './settings/projects.json';
 //console.log(project_options)
 
 function App() {
+
+  const { t, i18n } = useTranslation()
+
   //Testing >> TODO: Maybe make switching this something to do with env/automatic
   //const url = "localhost"
   //const port = ":3000"
@@ -353,37 +358,37 @@ function App() {
 
   let awkwardChars = ['š','Š','ṣ','Ṣ','ṭ','Ṭ','ś','Ś','ʾ','ḫ','Ḫ','ŋ','Ŋ','×',
     '₀','₁','₂','₃','₄','₅','₆','₇','₈','₉','ₓ']
-
   return (
     <>
       <div>
-        <button onClick={newDoc}>New</button>
+        <LangSwitcher/>
+        <button onClick={newDoc}>{t('NewDoc')}</button>
 
-        <label htmlFor="file-in" className='file-upload'>Upload</label>
+        <label htmlFor="file-in" className='file-upload'>{t('Upload')}</label>
         <input type="file" onChange={FileUploaded} accept=".atf" id="file-in" className='display:none;'/>
-        <button onClick={FileDownload}>Download</button>
-        <button onClick={saveToLocal}>Save To Local Storage</button>
-        <button onClick={loadFromLocal}>Load From Local Storage</button>
-        <button onClick={()=>{localStorage.clear()}}>Clear Storage</button>
-        <label htmlFor="file-name"> File Name </label>
+        <button onClick={FileDownload}>{t('Upload')}</button>
+        <button onClick={saveToLocal}>{t('SaveLocal')}</button>
+        <button onClick={loadFromLocal}>{t('LoadLocal')}</button>
+        <button onClick={()=>{localStorage.clear()}}>{t('ClearStorage')}</button>
+        <label htmlFor="file-name"> {t('FileName')} </label>
         <input type="text" onChange={FileNameChanged} value={filename} id="file-name"/>
         <br/>
 
-        <label htmlFor="server_select">ORACC Server </label>
+        <label htmlFor="server_select">{t('Server')} </label>
         <select id="server_select" onChange={ServerChanged} value={server}>
-          <option key="US">UPenn</option>
+          <option key="US" value={"UPENN"}>{t('UPENN')}</option>
 
         </select>
 
-        <label htmlFor="project_select"> Project </label>
+        <label htmlFor="project_select"> {t('Project')} </label>
         <input type="text" list="projects" id="project_select" onChange={ProjectChanged} value={project}/>
         <datalist id="projects">
           {project_options.projects.map((item,ind)=><option key={ind}>{item}</option>)}
         </datalist>
-        <button onClick={setProjectInText}>Set Project</button>
+        <button onClick={setProjectInText}>{t('SetProj')}</button>
 
-        <button onClick={validate}>Validate</button>
-        <button onClick={lemmatise}>Lemmatise</button><br/>
+        <button onClick={validate}>{t('Validate')}</button>
+        <button onClick={lemmatise}>{t('Lemmatise')}</button><br/>
         <div>
           Character modifier (@c, @f, @g, etc buttons w/ pics)<br/>          
         </div>
@@ -402,7 +407,7 @@ function App() {
         />
       </div>
       <div>
-        <a href='https://github.com/PEKennedy/ATF_Editor' target="_blank">Github</a>
+        <a href='https://github.com/PEKennedy/ATF_Editor' target="_blank">{t('Github')}</a>
       </div>
       
     </>
