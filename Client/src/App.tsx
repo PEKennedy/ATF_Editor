@@ -1,10 +1,8 @@
 
-import React, { createRef, Ref, useCallback, useEffect, useRef } from 'react'
+import React, { RefObject, useCallback, useRef } from 'react' 
 import { useState } from 'react'
-//import reactLogo from './assets/react.svg'
-//import viteLogo from '/vite.svg'
 import './App.css'
-import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror'; 
 import {ViewUpdate} from "@codemirror/view" //keymap, 
 import {basicSetup, EditorView} from "codemirror"
 //import { defaultKeymap } from "@codemirror/commands";
@@ -16,16 +14,11 @@ import * as project_options from './settings/projects.json';
 import {useTranslation} from 'react-i18next';
 import LangSwitcher from './LangSwitcher';
 
-//import {useRef, useEffect} from 'react';
-
 //import JSZip from 'jszip';
-
-//let project_options = require("./settings/projects.json")
-//console.log(project_options)
 
 function App() {
 
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation() //, i18n
 
   //Testing >> TODO: Maybe make switching this something to do with env/automatic
   //const url = "localhost"
@@ -47,7 +40,7 @@ function App() {
   // type 'Ref<ReactCodeMirrorRef> | undefined'
 
   //problem with createRef ref being null in async functions, so use useRef instead
-  const editorRef: Ref<ReactCodeMirrorRef> = useRef(null)//createRef()
+  const editorRef: RefObject<ReactCodeMirrorRef> = useRef(null)//createRef()
 
   async function PostToORACC(textbody="test", project="tests/mini", file="hyphens.atf", server="UPENN", method="validate"){
 
@@ -113,15 +106,15 @@ function App() {
         //console.log(file);
         setFilename(file.name.split(".")[0])
         file.text().then((res:any)=>{ //read the file blob as text
-          //setText(res) //set the file editor text state
           //console.log(res)
           //console.log(editorRef)
-          overwriteEditor(res)
+          overwriteEditor(res) //set the file editor text state
           // Use regex to extract any project code from the file
           const proj_re = /#project: ([\w/]+)/
-          const match = text.match(proj_re);
-          //console.log(match[1])
-          if(match && match[1]) setProject(match[1])
+          const match = res.match(proj_re);
+          if(match && match[1]){
+            setProject(match[1])
+          } 
         }).catch((err:any)=>{
           console.error(err);
         })
@@ -232,9 +225,9 @@ function App() {
     
     setErrorLines([])
 
-    Array.from(error_matches).forEach((err:any)=>{
-      let lineNum = err[1]
-      let message = err[2]
+    Array.from(error_matches).forEach((err:RegExpExecArray)=>{
+      let lineNum:number = Number(err[1])
+      let message:string = err[2]
       //console.log(lineNum)
       //console.log(message)
       let line = view.state.doc.line(lineNum)
@@ -282,9 +275,11 @@ function App() {
     }
   }
 
-  function addCharacter(char){
+  function addCharacter(char:string){
+    if(!editorRef || !editorRef.current) return;
     let view = editorRef.current.view;
-    let state = editorRef.current.view.state;
+    if(!view) return;
+    let state = view.state;
 
     let cursor = state.selection.main.from
     let transaction = state.update({changes: {from: cursor, insert: char}})
@@ -294,12 +289,13 @@ function App() {
 
   //overwrite the editor in a transaction so that undo history is preserved
   //function overwriteEditor(text){
-  const overwriteEditor = useCallback((newText)=>{
+  const overwriteEditor = useCallback((newText:string)=>{
+    if(!editorRef || !editorRef.current) return;
+    let view = editorRef.current.view;
+    if(!view) return;
+    let state = view.state;
 
-    let view = editorRef?.current?.view;
-    let state = view?.state;
-
-    let transaction = state?.update({changes: {from: 0, to: state.doc.length, insert: newText}})
+    let transaction = state.update({changes: {from: 0, to: state.doc.length, insert: newText}})
     view?.dispatch(transaction)
   },[])
 
@@ -322,7 +318,7 @@ function App() {
     sessionStorage.setItem("unsaved","F");
   }
 
-  window.onbeforeunload = (event) => {
+  window.onbeforeunload = (event:Event) => {
     //null or F should trigger the "are you sure you want to leave" dialog
     let unsaved = sessionStorage.getItem("unsaved") == "T"; 
     if(unsaved){
@@ -366,7 +362,7 @@ function App() {
 
         <label htmlFor="file-in" className='file-upload'>{t('Upload')}</label>
         <input type="file" onChange={FileUploaded} accept=".atf" id="file-in" className='display:none;'/>
-        <button onClick={FileDownload}>{t('Upload')}</button>
+        <button onClick={FileDownload}>{t('Download')}</button>
         <button onClick={saveToLocal}>{t('SaveLocal')}</button>
         <button onClick={loadFromLocal}>{t('LoadLocal')}</button>
         <button onClick={()=>{localStorage.clear()}}>{t('ClearStorage')}</button>
